@@ -1,0 +1,66 @@
+# StoryScript Parser
+
+This is a simplified version of a parser for a fictional language called "StoryScript" which is designed for creating interactive text adventures. This implementation focuses on simplicity and scalability.
+
+## Overview
+
+The StoryScript parser consists of two main components:
+
+1. **Lexer** (`simplified-storyscript.l`) - Tokenizes the input text using Flex
+2. **Parser** (`simplified-storyscript.y`) - Parses the tokens and builds the story structure using Bison
+
+The implementation uses a simple and intuitive data structure to represent stories:
+
+- **Story**: Contains a title, rooms, and items
+- **Room**: Has a name, description, and choices
+- **Choice**: Has text and options
+- **Option**: Has text and a target room
+- **Item**: Has a name and description
+
+## Key Simplifications
+
+The simplified version includes several improvements over the original:
+
+1. **Streamlined Data Structures**: Simplified the nested data structures while maintaining functionality
+2. **Reduced Error Handling Complexity**: Simplified error handling while maintaining robustness
+3. **Improved Memory Management**: More straightforward memory allocation and deallocation
+4. **Cleaner Code Structure**: Reduced redundancy and improved readability
+5. **Better Scalability**: Easier to extend with new features
+
+## How to Build and Run
+
+1. **Compile the parser**:
+   ```
+   make
+   ```
+
+2. **Run the parser with an example story**:
+   ```
+   ./storyscript simple_adventure.story
+   ```
+
+## Example StoryScript
+
+A simple example is provided in `simple_adventure.story`. StoryScript uses a simple syntax:
+
+```
+story {
+    title: "Adventure Title";
+    
+    room room_name {
+        description: "Room description text";
+        
+        choice "Choice prompt" {
+            option "Option text" goto target_room;
+        }
+    }
+}
+```
+
+## Extending the Parser
+
+This simplified implementation is designed to be easily extended:
+
+1. **Add New Elements**: Simply add new token types to the lexer and corresponding rules to the parser
+2. **Add New Attributes**: Update the data structures and add new parsing rules
+3. **Add New Features**: The modular design makes it easy to add features like conditions, variables, or custom actions
