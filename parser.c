@@ -79,6 +79,11 @@ extern int yyparse();
 extern FILE *yyin;
 void yyerror(const char *s);
 
+// Access to location information
+extern int yylineno;  // Current line number from our lexer
+extern int column;    // Current column number from our lexer
+extern char *yytext;  // Current token text
+
 /* Simple story data structures */
 typedef struct Option {
     char *text;
@@ -115,6 +120,7 @@ typedef struct Story {
 Story *story = NULL;
 char current_room[256];
 char current_choice[256];
+char *current_filename = NULL;  // Track filename for error reporting
 
 /* Function prototypes */
 void init_story();
@@ -126,7 +132,7 @@ void add_item(const char *name, const char *description);
 void print_story();
 void free_story();
 
-#line 130 "parser.c"
+#line 136 "parser.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -579,9 +585,9 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    73,    73,    76,    81,    83,    87,    88,    89,    93,
-     100,   103,   105,   109,   114,   116,   120,   126,   126,   134,
-     136,   140,   141,   145,   151,   151,   159,   161,   165
+       0,    79,    79,    82,    87,    89,    93,    94,    95,    99,
+     106,   109,   111,   115,   120,   122,   126,   132,   132,   140,
+     142,   146,   147,   151,   157,   157,   165,   167,   171
 };
 #endif
 
@@ -1171,90 +1177,90 @@ yyreduce:
   switch (yyn)
     {
   case 3: /* story_definition: STORY LBRACE story_content RBRACE  */
-#line 76 "storyscript.y"
+#line 82 "storyscript.y"
                                       {
         printf("Story parsed successfully\n");
     }
-#line 1179 "parser.c"
+#line 1185 "parser.c"
     break;
 
   case 9: /* title_def: TITLE COLON STRING_LITERAL SEMICOLON  */
-#line 93 "storyscript.y"
+#line 99 "storyscript.y"
                                          {
         if (story == NULL) init_story();
         story->title = (yyvsp[-1].string_val);
     }
-#line 1188 "parser.c"
+#line 1194 "parser.c"
     break;
 
   case 13: /* item_def: ITEM IDENTIFIER LBRACE item_properties RBRACE  */
-#line 109 "storyscript.y"
+#line 115 "storyscript.y"
                                                   {
         free((yyvsp[-3].string_val)); // We're done with the identifier
     }
-#line 1196 "parser.c"
+#line 1202 "parser.c"
     break;
 
   case 16: /* item_property: DESCRIPTION COLON STRING_LITERAL SEMICOLON  */
-#line 120 "storyscript.y"
+#line 126 "storyscript.y"
                                                {
         add_item("current_item", (yyvsp[-1].string_val)); // Using placeholder name
     }
-#line 1204 "parser.c"
+#line 1210 "parser.c"
     break;
 
   case 17: /* $@1: %empty  */
-#line 126 "storyscript.y"
+#line 132 "storyscript.y"
                     {
         strncpy(current_room, (yyvsp[0].string_val), sizeof(current_room) - 1);
         free((yyvsp[0].string_val));
     }
-#line 1213 "parser.c"
+#line 1219 "parser.c"
     break;
 
   case 18: /* room_def: ROOM IDENTIFIER $@1 LBRACE room_content RBRACE  */
-#line 129 "storyscript.y"
+#line 135 "storyscript.y"
                                  {
         current_room[0] = '\0'; // Clear current room
     }
-#line 1221 "parser.c"
+#line 1227 "parser.c"
     break;
 
   case 23: /* room_description: DESCRIPTION COLON STRING_LITERAL SEMICOLON  */
-#line 145 "storyscript.y"
+#line 151 "storyscript.y"
                                                {
         add_room(current_room, (yyvsp[-1].string_val));
     }
-#line 1229 "parser.c"
+#line 1235 "parser.c"
     break;
 
   case 24: /* $@2: %empty  */
-#line 151 "storyscript.y"
+#line 157 "storyscript.y"
                           {
         strncpy(current_choice, (yyvsp[0].string_val), sizeof(current_choice) - 1);
         add_choice(current_room, (yyvsp[0].string_val));
     }
-#line 1238 "parser.c"
+#line 1244 "parser.c"
     break;
 
   case 25: /* choice_def: CHOICE STRING_LITERAL $@2 LBRACE options RBRACE  */
-#line 154 "storyscript.y"
+#line 160 "storyscript.y"
                             {
         current_choice[0] = '\0'; // Clear current choice
     }
-#line 1246 "parser.c"
+#line 1252 "parser.c"
     break;
 
   case 28: /* option_def: OPTION STRING_LITERAL GOTO IDENTIFIER SEMICOLON  */
-#line 165 "storyscript.y"
+#line 171 "storyscript.y"
                                                     {
         add_option(current_room, current_choice, (yyvsp[-3].string_val), (yyvsp[-1].string_val));
     }
-#line 1254 "parser.c"
+#line 1260 "parser.c"
     break;
 
 
-#line 1258 "parser.c"
+#line 1264 "parser.c"
 
       default: break;
     }
@@ -1447,7 +1453,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 170 "storyscript.y"
+#line 176 "storyscript.y"
 
 
 /* Implementation of core functions */
@@ -1511,7 +1517,8 @@ void add_choice(const char *room_name, const char *choice_text) {
         room = room->next;
     }
     
-    fprintf(stderr, "Room '%s' not found\n", room_name);
+    fprintf(stderr, "Error at line %d, column %d: Room '%s' not found\n", 
+            yylineno, column, room_name);
 }
 
 void add_option(const char *room_name, const char *choice_text, 
@@ -1545,14 +1552,15 @@ void add_option(const char *room_name, const char *choice_text,
                 }
                 choice = choice->next;
             }
-            fprintf(stderr, "Choice '%s' not found in room '%s'\n", 
-                    choice_text, room_name);
+            fprintf(stderr, "Error at line %d, column %d: Choice '%s' not found in room '%s'\n", 
+                    yylineno, column, choice_text, room_name);
             return;
         }
         room = room->next;
     }
     
-    fprintf(stderr, "Room '%s' not found\n", room_name);
+    fprintf(stderr, "Error at line %d, column %d: Room '%s' not found\n", 
+            yylineno, column, room_name);
 }
 
 void add_item(const char *name, const char *description) {
@@ -1676,6 +1684,12 @@ void free_story() {
     free(story->title);
     free(story);
     story = NULL;
+    
+    // Free filename if allocated
+    if (current_filename) {
+        free(current_filename);
+        current_filename = NULL;
+    }
 }
 
 int main(int argc, char **argv) {
@@ -1690,8 +1704,10 @@ int main(int argc, char **argv) {
             return 1;
         }
         yyin = input;
+        current_filename = strdup(argv[1]);
     } else {
         printf("Reading from standard input...\n");
+        current_filename = strdup("<stdin>");
     }
     
     // Parse input
@@ -1704,6 +1720,15 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+// Enhanced error reporting function
 void yyerror(const char *s) {
-    fprintf(stderr, "Parse error: %s\n", s);
+    fprintf(stderr, "Error in %s at line %d, column %d: %s", 
+            current_filename ? current_filename : "<unknown>",
+            yylineno, column, s);
+    
+    // Print the current token if available
+    if (yytext && *yytext)
+        fprintf(stderr, " near token '%s'", yytext);
+    
+    fprintf(stderr, "\n");
 }

@@ -11,20 +11,30 @@ char *string_buffer_ptr;
 // Error handling function
 void yyerror(const char *s);
 
+// Column tracking
+int column = 1;
+
 // Avoid compiler warnings
 int yywrap(void) { return 1; }
+
+// Update column position
+#define YY_USER_ACTION column += yyleng;
 %}
 
 /* States for lexer */
 %x STRING
 %x COMMENT
 
+/* Track line numbers */
+%option yylineno
+
 %%
 
 "//".*      { /* Skip single line comments */ }
 "/*"        { BEGIN(COMMENT); }
 <COMMENT>"*/" { BEGIN(INITIAL); }
-<COMMENT>.|\n { /* Skip comment content */ }
+<COMMENT>\n { column = 1; yylineno++; }
+<COMMENT>.  { /* Skip comment content */ }
 
 "story"       { return STORY; }
 "room"        { return ROOM; }
@@ -73,7 +83,9 @@ int yywrap(void) { return 1; }
     }
 }
 
-[ \t\r\n]+  { /* Skip whitespace */ }
+\n      { column = 1; yylineno++; }
+[ \t]+  { /* Skip other whitespace but update column */ }
+\r      { /* Skip carriage return */ }
 
 . { 
     yyerror("Invalid character"); 

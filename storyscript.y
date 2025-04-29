@@ -9,6 +9,11 @@ extern int yyparse();
 extern FILE *yyin;
 void yyerror(const char *s);
 
+// Access to location information
+extern int yylineno;  // Current line number from our lexer
+extern int column;    // Current column number from our lexer
+extern char *yytext;  // Current token text
+
 /* Simple story data structures */
 typedef struct Option {
     char *text;
@@ -45,6 +50,7 @@ typedef struct Story {
 Story *story = NULL;
 char current_room[256];
 char current_choice[256];
+char *current_filename = NULL;  // Track filename for error reporting
 
 /* Function prototypes */
 void init_story();
@@ -230,7 +236,8 @@ void add_choice(const char *room_name, const char *choice_text) {
         room = room->next;
     }
     
-    fprintf(stderr, "Room '%s' not found\n", room_name);
+    fprintf(stderr, "Error at line %d, column %d: Room '%s' not found\n", 
+            yylineno, column, room_name);
 }
 
 void add_option(const char *room_name, const char *choice_text, 
@@ -264,14 +271,15 @@ void add_option(const char *room_name, const char *choice_text,
                 }
                 choice = choice->next;
             }
-            fprintf(stderr, "Choice '%s' not found in room '%s'\n", 
-                    choice_text, room_name);
+            fprintf(stderr, "Error at line %d, column %d: Choice '%s' not found in room '%s'\n", 
+                    yylineno, column, choice_text, room_name);
             return;
         }
         room = room->next;
     }
     
-    fprintf(stderr, "Room '%s' not found\n", room_name);
+    fprintf(stderr, "Error at line %d, column %d: Room '%s' not found\n", 
+            yylineno, column, room_name);
 }
 
 void add_item(const char *name, const char *description) {
@@ -395,6 +403,12 @@ void free_story() {
     free(story->title);
     free(story);
     story = NULL;
+    
+    // Free filename if allocated
+    if (current_filename) {
+        free(current_filename);
+        current_filename = NULL;
+    }
 }
 
 int main(int argc, char **argv) {
@@ -409,8 +423,10 @@ int main(int argc, char **argv) {
             return 1;
         }
         yyin = input;
+        current_filename = strdup(argv[1]);
     } else {
         printf("Reading from standard input...\n");
+        current_filename = strdup("<stdin>");
     }
     
     // Parse input
@@ -423,6 +439,15 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+// Enhanced error reporting function
 void yyerror(const char *s) {
-    fprintf(stderr, "Parse error: %s\n", s);
+    fprintf(stderr, "Error in %s at line %d, column %d: %s", 
+            current_filename ? current_filename : "<unknown>",
+            yylineno, column, s);
+    
+    // Print the current token if available
+    if (yytext && *yytext)
+        fprintf(stderr, " near token '%s'", yytext);
+    
+    fprintf(stderr, "\n");
 }

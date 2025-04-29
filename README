@@ -56,11 +56,3 @@ story {
     }
 }
 ```
-
-## Extending the Parser
-
-This simplified implementation is designed to be easily extended:
-
-1. **Add New Elements**: Simply add new token types to the lexer and corresponding rules to the parser
-2. **Add New Attributes**: Update the data structures and add new parsing rules
-3. **Add New Features**: The modular design makes it easy to add features like conditions, variables, or custom actions

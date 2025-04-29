@@ -26,3 +26,7 @@ clean:
 test: storyscript
 	@echo "Running test with simple_adventure.story..."
 	./storyscript simple_adventure.story
+# Test the program with a sample file
+error: storyscript
+	@echo "Running test with error_adventure.story..."
+	./storyscript error_adventure.story

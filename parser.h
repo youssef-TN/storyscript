@@ -77,7 +77,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 61 "storyscript.y"
+#line 67 "storyscript.y"
 
     char *string_val;
 
